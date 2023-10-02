@@ -14,11 +14,10 @@
 </head>
 <body>
 <div class="navbar">
-    <a href="/">Início</a>
     <a href="/admin/">Área Administrativa</a>
 </div>
 <div class="container">
-    <h1>REGISTRE SUA 0S</h1>
+    <h1>REGISTRE SUA OS</h1>
     <form action="." method="post">
         {% csrf_token %}
         <div class="form-group">
@@ -33,17 +32,7 @@
             {% endif %}
         </div>
 
-        <div class="form-group">
-            <label for="{{ form.ordem_cliente.id_for_label }}">Cliente:</label>
-            {{ form.ordem_cliente }}
-            {% if form.ordem_cliente.errors %}
-                <ul class="errors">
-                    {% for error in form.ordem_cliente.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
+
 
         <div class="form-group">
             <label for="{{ form.ordem_descricao.id_for_label }}">Descrição do Procedimento:</label>
@@ -58,7 +47,7 @@
         </div>
 
         <div class="form-group">
-            <label for="{{ form.ordem_grupo_pecas.id_for_label }}">Grupo de Peças:</label>
+            <label for="{{ form.ordem_grupo_pecas.id_for_label }}">Conjunto de Sistema:</label>
             {{ form.ordem_grupo_pecas }}
             {% if form.ordem_grupo_pecas.errors %}
                 <ul class="errors">
@@ -70,7 +59,7 @@
         </div>
 
         <div class="form-group">
-            <label for="{{ form.pecas_grupo.id_for_label }}">Peças do Grupo:</label>
+            <label for="{{ form.pecas_grupo.id_for_label }}">Peças Trocadas:</label>
             <select name="pecas_grupo" id="id_pecas_grupo" multiple>
                 {% for peca in form.pecas_grupo.field.queryset %}
                     <option value="{{ peca.id }}">{{ peca }}</option>

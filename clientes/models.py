@@ -1,25 +1,30 @@
-from cpf_field.models import *
-from cpf_field.models import CPFField
 from django.db import models
 import random
+from django.core.validators import MinLengthValidator
+from django.core.exceptions import ValidationError
+
+
+def validate_cpf(value):
+    if not value.isdigit():
+        raise ValidationError('O CPF deve conter apenas números')
 
 
 # ---------------------Cadastros primários------------------------
 class PecasVeiculo(models.Model):
-    pecas_veiculo = models.CharField(max_length=20)
+    pecas_veiculo = models.CharField(max_length=30, verbose_name="Peças do veículo")
 
     class Meta:
-        verbose_name_plural = "Cadastro de Peças"
+        verbose_name_plural = "02-Cadastro de Peças"
 
     def __str__(self):
         return self.pecas_veiculo
 
 
 class TipoVeiculo(models.Model):
-    tipoVeiculo = models.CharField(max_length=20, verbose_name="Tipo de veículo")
+    tipoVeiculo = models.CharField(max_length=30, verbose_name="Tipo de veículo")
 
     class Meta:
-        verbose_name_plural = "Cadastro de Veículo"
+        verbose_name_plural = "03-Cadastro de Veículo"
 
     def __str__(self):
         return self.tipoVeiculo
@@ -28,12 +33,12 @@ class TipoVeiculo(models.Model):
 # -------------------------Cadastro de grupo----------------
 
 class GrupoPecas(models.Model):
-    grupo_pecas = models.CharField(max_length=20, verbose_name="Nome do Grupo")
-    grupo_description = models.TextField(blank=True, null=False, verbose_name="Descrição do grupo cadastrado")
+    grupo_pecas = models.CharField(max_length=30, verbose_name="Nome do conjunto")
+    grupo_description = models.TextField(blank=True, null=False, verbose_name="Descrição do conjunto cadastrado")
     pecas_veiculo = models.ManyToManyField(PecasVeiculo, verbose_name="Peças a serem adicionadas")
 
     class Meta:
-        verbose_name_plural = "Cadastro de Grupo de Peças"
+        verbose_name_plural = "04-Cadastro de Sistema"
 
     def __str__(self):
         return self.grupo_pecas
@@ -41,14 +46,17 @@ class GrupoPecas(models.Model):
 
 # ----------------------------Clientes------------------------------------
 class Cliente(models.Model):
-    cliente_nome = models.CharField(max_length=100, verbose_name='Nome')
+    cliente_nome = models.CharField(max_length=150, verbose_name='Nome')
     cliente_email = models.EmailField(blank=False, null=False, verbose_name='Email')
     cliente_phone = models.CharField(max_length=20, blank=False, null=False, verbose_name="Telefone")
-    cliente_cpf = CPFField('CPF', null=False, blank=False)
+    cliente_cpf = models.CharField('CPF/CNPJ', max_length=14, validators=[validate_cpf, MinLengthValidator(11)],
+                                   null=False,
+                                   blank=False)
     cliente_endereco = models.CharField(max_length=100, blank=False, null=False, verbose_name="Endereço")
+    cliente_data = models.DateField(auto_now_add=True, blank=False, null=False, verbose_name="Data de cadastro")
 
     class Meta:
-        verbose_name_plural = "Cadastro de Cliente"
+        verbose_name_plural = "01-Cadastro de Cliente"
 
     def __str__(self):
         return self.cliente_nome
@@ -58,24 +66,20 @@ class Cliente(models.Model):
 
 class Veiculo(models.Model):
     veiculo_tipo = models.ForeignKey(TipoVeiculo, on_delete=models.CASCADE)
-    veiculo_data = models.DateField(auto_now_add=True, blank=False, null=True, verbose_name="Data de Cadastro")
+    veiculo_data = models.DateField(auto_now_add=True, blank=False, null=True, verbose_name="Data de cadastro")
     veiculo_placa = models.CharField(max_length=10, verbose_name="Placa do veículo", unique=True)
-    veiculo_operante = models.BooleanField(default=False, blank=False, null=False)
-    veiculo_descricao = models.TextField(blank=True, null=False, verbose_name='Descrição do Veículo')
-    veiculo_grupo_pecas = models.ForeignKey(GrupoPecas, on_delete=models.CASCADE,
-                                            verbose_name='Grupo de peças associado', null=True)
     veiculo_cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, verbose_name='Cliente')
+    veiculo_operante = models.BooleanField(default=False, blank=False, null=False, verbose_name='Veículo operante')
+    veiculo_descricao = models.TextField(blank=True, null=False, verbose_name='Descrição do Veículo')
 
     class Meta:
-        verbose_name_plural = "Veículo"
+        verbose_name_plural = "05-Criação de Veículo"
 
     def __str__(self):
-        return self.veiculo_placa
+        return f'{self.veiculo_placa} - {self.veiculo_cliente.cliente_nome}'
 
 
 # -----------------------Ordem de serviço--------------------
-
-from django.db import models
 
 
 class OrdemServico(models.Model):
@@ -83,14 +87,10 @@ class OrdemServico(models.Model):
     ordem_placa = models.ForeignKey(
         Veiculo,
         to_field='veiculo_placa',
-        verbose_name="Placa do veículo",
+        verbose_name="Placa e Cliente do veículo",
         on_delete=models.CASCADE
     )
-    ordem_cliente = models.ForeignKey(
-        Cliente,
-        verbose_name="Cliente associado",
-        on_delete=models.CASCADE
-    )
+
     ordem_data = models.DateField(
         auto_now_add=True,
         blank=False,
@@ -114,11 +114,9 @@ class OrdemServico(models.Model):
         null=False,
         verbose_name='Descrição do procedimento'
     )
-    ordem_grupo_pecas = models.ForeignKey(
+    ordem_grupo_pecas = models.ManyToManyField(
         GrupoPecas,
-        on_delete=models.CASCADE,
-        verbose_name="Grupo de peças",
-        null=True,
+        verbose_name="Conjunto de Sistema",
         blank=True
     )
     ordem_troca = models.BooleanField(
@@ -138,21 +136,21 @@ class OrdemServico(models.Model):
     pecas_grupo = models.ManyToManyField(
         PecasVeiculo,
         blank=True,
-        verbose_name="Peças do Grupo"
+        verbose_name="Peças trocadas"
     )
     ordem_valor = models.IntegerField(
         default=0,
         verbose_name='Outros Gastos'
     )
     ordem_outros = models.TextField(
-        max_length=40,
+        max_length=800,
         blank=True,
         null=False,
         verbose_name='Descrição dos gastos'
     )
 
     class Meta:
-        verbose_name_plural = "Ordens de Serviço"
+        verbose_name_plural = "06-Ordens de Serviço"
 
     def __str__(self):
         return str(self.ordem_codigo)
@@ -166,8 +164,3 @@ class OrdemServico(models.Model):
                     break
 
         super().save(*args, **kwargs)
-
-        if self.ordem_grupo_pecas:
-            self.pecas_grupo.set(self.ordem_grupo_pecas.pecas_veiculo.all())
-        else:
-            self.pecas_grupo.clear()

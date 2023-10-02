@@ -24,19 +24,20 @@ class GrupoAdmin(admin.ModelAdmin):
 # ---------Cadastros Veículo
 @admin.register(Veiculo)
 class VeiculoAdmin(admin.ModelAdmin):
-    list_display = ('veiculo_placa', 'veiculo_tipo', 'veiculo_operante', 'veiculo_cliente')
-    list_filter = ('veiculo_tipo', 'veiculo_operante', 'veiculo_grupo_pecas', 'veiculo_cliente')
+    list_filter = ('veiculo_tipo', 'veiculo_operante', 'veiculo_cliente','veiculo_data')
+    list_display = ('veiculo_placa', 'veiculo_tipo', 'veiculo_operante', 'veiculo_cliente','veiculo_data')
 
 
 # ---------Cadastros Cliente--------------
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('cliente_nome', 'cliente_email', 'cliente_phone')
+    list_display = ('cliente_nome', 'cliente_email', 'cliente_phone', 'cliente_data')
+    list_filter = ('cliente_nome', 'cliente_data')
 
 
 # ---------Ordem de Serviço--------------
 @admin.register(OrdemServico)
 class OrdemAdmin(admin.ModelAdmin):
-    list_display = ('ordem_codigo', 'ordem_placa', 'ordem_cliente', 'ordem_data', 'ordem_classificacao', 'ordem_valor')
+    list_display = ('ordem_codigo', 'ordem_placa', 'ordem_data', 'ordem_classificacao', 'ordem_valor')
     list_filter = ('ordem_classificacao', 'ordem_data')
-    filter_horizontal = ('pecas_grupo',)
+    filter_horizontal = ('ordem_grupo_pecas','pecas_grupo')
